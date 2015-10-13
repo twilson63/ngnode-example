@@ -21,8 +21,11 @@ angular.module('app', [
   '$stateProvider',
   require('./ngconfig')
 ])
-.factory('messages', 
-  require('./factories/messages'))
+.factory('channels', 
+  require('./factories/channels'))
+.factory('posts', 
+  require('./factories/posts'))
+
 
   
 

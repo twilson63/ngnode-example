@@ -11,12 +11,12 @@ exports.url = '/'
 exports.template = render().outerHTML
 exports.controller = [
   '$scope',
-  'messages',
+  'channels',
   component
 ]
 
-function component ($scope, messages) {
-  messages.list().then(function (result) {
+function component ($scope, channels) {
+  channels.list().then(function (result) {
     $scope.channels = result.data
   })
 }
@@ -32,10 +32,10 @@ function render () {
     h('.list-group', [
       h('a.list-group-item', {
         'data-ng-repeat': 'channel in channels',
-        'data-ui-sref': 'showChannel({id: channel.name})'
+        'data-ui-sref': 'messages({channel_id: channel._id})'
       }, [
         h('.pull-right', [
-          h('.badge.badge-default', '{{channel.unread}}'),
+          h('.badge.badge-default', '{{channel.posts}}'),
         ]),
         h('h5', '{{channel.name}}')
       ])

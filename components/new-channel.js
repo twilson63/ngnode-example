@@ -4,19 +4,23 @@ exports.url = '/channels/new'
 exports.template = render().outerHTML
 exports.controller = [
   '$scope',
-  'messages',
+  'channels',
   '$state', 
   component
 ]
 
-function component ($scope, messages, $state) {
+function component ($scope, channels, $state) {
   $scope.create = function (channel) {
+    console.log('create called')
     channel.unread = 0
-    messages.create(channel).then(function (result) {
+    channels.create(channel).then(function (result) {
+      console.log(result)
       if (result.data.ok) {
         $state.go('home')
       }  
       // handle errors
+    }, function (err) {
+      console.log(err)
     })
     
   }

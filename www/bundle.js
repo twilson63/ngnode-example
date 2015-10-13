@@ -22,15 +22,18 @@ angular.module('app', [
   '$stateProvider',
   require('./ngconfig')
 ])
-.factory('messages', 
-  require('./factories/messages'))
+.factory('channels', 
+  require('./factories/channels'))
+.factory('posts', 
+  require('./factories/posts'))
+
 
   
 
 angular.element(document).ready(function () {
   angular.bootstrap(document, ['app'])
 })
-},{"./factories/messages":"/Users/twilson631/courses/sandbox/factories/messages.js","./ngconfig":"/Users/twilson631/courses/sandbox/ngconfig.js","angular":"/Users/twilson631/courses/sandbox/node_modules/angular/index.js","angular-ui-router":"/Users/twilson631/courses/sandbox/node_modules/angular-ui-router/release/angular-ui-router.js","hyperscript":"/Users/twilson631/courses/sandbox/node_modules/hyperscript/index.js"}],"/Users/twilson631/courses/sandbox/components/home.js":[function(require,module,exports){
+},{"./factories/channels":"/Users/twilson631/courses/sandbox/factories/channels.js","./factories/posts":"/Users/twilson631/courses/sandbox/factories/posts.js","./ngconfig":"/Users/twilson631/courses/sandbox/ngconfig.js","angular":"/Users/twilson631/courses/sandbox/node_modules/angular/index.js","angular-ui-router":"/Users/twilson631/courses/sandbox/node_modules/angular-ui-router/release/angular-ui-router.js","hyperscript":"/Users/twilson631/courses/sandbox/node_modules/hyperscript/index.js"}],"/Users/twilson631/courses/sandbox/components/home.js":[function(require,module,exports){
 var h = require('hyperscript')
 /* 
   {
@@ -44,12 +47,12 @@ exports.url = '/'
 exports.template = render().outerHTML
 exports.controller = [
   '$scope',
-  'messages',
+  'channels',
   component
 ]
 
-function component ($scope, messages) {
-  messages.list().then(function (result) {
+function component ($scope, channels) {
+  channels.list().then(function (result) {
     $scope.channels = result.data
   })
 }
@@ -65,12 +68,56 @@ function render () {
     h('.list-group', [
       h('a.list-group-item', {
         'data-ng-repeat': 'channel in channels',
-        'data-ui-sref': 'showChannel({id: channel.name})'
+        'data-ui-sref': 'messages({channel_id: channel._id})'
       }, [
         h('.pull-right', [
-          h('.badge.badge-default', '{{channel.unread}}'),
+          h('.badge.badge-default', '{{channel.posts}}'),
         ]),
         h('h5', '{{channel.name}}')
+      ])
+    ])
+  ])
+}
+},{"hyperscript":"/Users/twilson631/courses/sandbox/node_modules/hyperscript/index.js"}],"/Users/twilson631/courses/sandbox/components/messages.js":[function(require,module,exports){
+var h = require('hyperscript')
+
+exports.url = '/channel/:channel_id/messages'
+exports.template = render().outerHTML
+exports.controller = [
+  '$scope',
+  '$stateParams',
+  'posts',
+  component
+]
+
+function component ($scope, $stateParams, posts) {
+  $scope.channel_id = $stateParams.channel_id
+
+  posts.list($stateParams.channel_id)
+    .then(function (posts) {
+      $scope.posts = posts.data
+    })
+}
+
+function render () {
+  return h('.container', [
+    h('.pull-right', [
+      h('a.btn.btn-primary', {
+        'data-ui-sref': 'newMessage({ channel_id: channel_id})'
+      }, 'New Post'),
+      h('a.btn.btn-warning', {
+        'data-ui-sref': 'home',
+        style: {
+          'margin-left': '5px'
+        }
+      }, 'Home')
+    ]),
+    h('h3', 'Messaging'),
+    h('.list-group', [
+      h('a.list-group-item', {
+        'data-ng-repeat': 'post in posts'
+      }, [
+        h('h5', '{{post.body}}')
       ])
     ])
   ])
@@ -82,19 +129,23 @@ exports.url = '/channels/new'
 exports.template = render().outerHTML
 exports.controller = [
   '$scope',
-  'messages',
+  'channels',
   '$state', 
   component
 ]
 
-function component ($scope, messages, $state) {
+function component ($scope, channels, $state) {
   $scope.create = function (channel) {
+    console.log('create called')
     channel.unread = 0
-    messages.create(channel).then(function (result) {
+    channels.create(channel).then(function (result) {
+      console.log(result)
       if (result.data.ok) {
         $state.go('home')
       }  
       // handle errors
+    }, function (err) {
+      console.log(err)
     })
     
   }
@@ -126,7 +177,62 @@ function render () {
     ])
   ])
 }
-},{"hyperscript":"/Users/twilson631/courses/sandbox/node_modules/hyperscript/index.js"}],"/Users/twilson631/courses/sandbox/factories/messages.js":[function(require,module,exports){
+},{"hyperscript":"/Users/twilson631/courses/sandbox/node_modules/hyperscript/index.js"}],"/Users/twilson631/courses/sandbox/components/new-message.js":[function(require,module,exports){
+var h = require('hyperscript')
+
+exports.url = '/channel/:channel_id/messages/new'
+exports.template = render().outerHTML
+exports.controller = [
+  '$scope',
+  'posts',
+  '$state',
+  '$stateParams', 
+  component
+]
+
+function component ($scope, posts, $state, $stateParams) {
+  $scope.channel_id = $stateParams.channel_id
+
+  $scope.create = function (post) {
+    posts.create($stateParams.channel_id, post).then(function (result) {
+      
+      if (result.data.ok) {
+        $state.go('messages', { channel_id: $stateParams.channel_id })
+      }  
+      // handle errors
+    }, function (err) {
+      console.log(err)
+    })
+    
+  }
+}
+
+function render () {
+  return h('.container', [
+    h('h3', 'New Post'),
+    h('form', {
+      'data-ng-submit': 'create(post)'
+    }, [
+      h('.form-group', [
+        h('label.sr-only', 'Body'),
+        h('textarea.form-control', {
+          'data-ng-model': 'post.body',
+          placeholder: '[Enter Message]'
+        })
+      ]),
+      h('.form-group', [
+        h('button.btn.btn-primary', 'Create Post'),
+        h('a.btn.btn-warning', {
+          'data-ui-sref': 'messages({channel_id: channel_id})',
+          style: {
+            'margin-left': '5px'
+          }
+        }, 'Cancel')
+      ])
+    ])
+  ])
+}
+},{"hyperscript":"/Users/twilson631/courses/sandbox/node_modules/hyperscript/index.js"}],"/Users/twilson631/courses/sandbox/factories/channels.js":[function(require,module,exports){
 module.exports = function ($http) {
   return {
     list: function () {
@@ -137,14 +243,28 @@ module.exports = function ($http) {
     }
   }
 }
+},{}],"/Users/twilson631/courses/sandbox/factories/posts.js":[function(require,module,exports){
+module.exports = function ($http) {
+  return {
+    list: function (channel_id) {
+      return $http.get('/api/channels/' + channel_id + '/posts')
+
+    },
+    create: function (channel_id, post) {
+      return $http.post('/api/channels/' + channel_id + '/posts', post)
+    }
+  }
+}
 },{}],"/Users/twilson631/courses/sandbox/ngconfig.js":[function(require,module,exports){
 module.exports = function ($urlRouterProvider, $stateProvider) {
   $urlRouterProvider.otherwise('/')
   $stateProvider
     .state('home', require('./components/home'))    
     .state('newChannel', require('./components/new-channel'))
+    .state('messages', require('./components/messages'))
+    .state('newMessage', require('./components/new-message'))
 }
-},{"./components/home":"/Users/twilson631/courses/sandbox/components/home.js","./components/new-channel":"/Users/twilson631/courses/sandbox/components/new-channel.js"}],"/Users/twilson631/courses/sandbox/node_modules/angular-ui-router/release/angular-ui-router.js":[function(require,module,exports){
+},{"./components/home":"/Users/twilson631/courses/sandbox/components/home.js","./components/messages":"/Users/twilson631/courses/sandbox/components/messages.js","./components/new-channel":"/Users/twilson631/courses/sandbox/components/new-channel.js","./components/new-message":"/Users/twilson631/courses/sandbox/components/new-message.js"}],"/Users/twilson631/courses/sandbox/node_modules/angular-ui-router/release/angular-ui-router.js":[function(require,module,exports){
 /**
  * State-based routing for AngularJS
  * @version v0.2.15
