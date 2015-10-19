@@ -9,10 +9,10 @@ npm run dev
 
 * Messaging App
 
-* Create New Channels 
+* Create New Channels
 * Post Messages in each Channel
 
---- 
+---
 
 * My Node Module - Last 15 minutes
 
@@ -26,10 +26,17 @@ npm run dev
 
 * aws-sdk -
 
-* event-streams - 
+* event-streams -
 
 ---
 
 * EventEmitter
 
+## API
 
+GET /channels
+POST /channels
+
+GET /channels/:channel_id/posts
+POST /channels/:channel_id/posts
+PUT /channels/:channel_id/posts/:id
