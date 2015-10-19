@@ -1,4 +1,4 @@
-// express 
+// express
 var http = require('http')
 var HttpHashRouter = require('http-hash-router')
 var ecstatic = require('ecstatic')
@@ -21,9 +21,9 @@ router.set('/api/channels/:channel_id/posts', {
         // emit (key, value)
         emit(doc.channel_id, null)
       }
-    }, { 
+    }, {
       key: opts.params.channel_id,
-      include_docs: true 
+      include_docs: true
     })
       .then(function (result) {
         //sendJSON(req, res, [{_id: '1', body: 'Hello World'}])
@@ -36,18 +36,18 @@ router.set('/api/channels/:channel_id/posts', {
       body.channel_id = opts.params.channel_id
 
       db.post(body).then(function (result) {
-        sendJSON(req, res, result)  
+        sendJSON(req, res, result)
       })
-    }) 
+    })
   },
   PUT: function (req, res) {
     jsonBody(req, res, function (err, body) {
       db.put(body).then(function (result) {
-        sendJSON(req, res, result)  
+        sendJSON(req, res, result)
       })
-    }) 
-  } 
-}) 
+    })
+  }
+})
 
 router.set('/api/channels', {
   GET: function (req, res) {
@@ -58,10 +58,10 @@ router.set('/api/channels', {
         // { rows: [{ key: , value: , doc: }], }
         sendJSON(req, res, _(result.rows).map(function (r) {
           console.log(r)
-          return { 
+          return {
             _id: r.key,
-            name: r.key, 
-            posts: r.value 
+            name: r.key,
+            posts: r.value
           }
         }))
       })
@@ -70,9 +70,34 @@ router.set('/api/channels', {
     jsonBody(req, res, function (err, body) {
       body.type = 'channel'
       db.put(body, body.name).then(function (result) {
-        sendJSON(req, res, result)  
+        sendJSON(req, res, result)
       })
-    }) 
+    })
+  }
+})
+
+var palmetto = require('@twilson63/palmetto-couchdb')
+var ee = palmetto({
+  endpoint: 'http://localhost:5984',
+  app: 'msg_flow'
+})
+
+router.set('/api', {
+  POST: function (req, res) {
+    jsonBody(req, res, function (err, body) {
+      var timeoutHasRun = false
+      var to = setTimeout(function () {
+        timeoutHasRun = true
+        sendError(req, res, 'Timeout for Event: ' + body.subject)
+      }, 2000)
+
+      ee.emit('send', body)
+
+      ee.once(body.from, function (response) {
+        clearTimeout(to)
+        sendJSON(req, res, response)
+      })
+    })
   }
 })
 

@@ -1,5 +1,5 @@
 var h = require('hyperscript')
-/* 
+/*
   {
     url
     template
@@ -16,8 +16,8 @@ exports.controller = [
 ]
 
 function component ($scope, channels) {
-  channels.list().then(function (result) {
-    $scope.channels = result.data
+  channels.list().then(function (list) {
+    $scope.channels = list
   })
 }
 

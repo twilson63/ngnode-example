@@ -5,7 +5,7 @@ exports.template = render().outerHTML
 exports.controller = [
   '$scope',
   'channels',
-  '$state', 
+  '$state',
   component
 ]
 
@@ -13,16 +13,15 @@ function component ($scope, channels, $state) {
   $scope.create = function (channel) {
     console.log('create called')
     channel.unread = 0
-    channels.create(channel).then(function (result) {
-      console.log(result)
-      if (result.data.ok) {
+    channels.create(channel).then(function (response) {
+      if (response.ok) {
         $state.go('home')
-      }  
+      }
       // handle errors
     }, function (err) {
       console.log(err)
     })
-    
+
   }
 }
 
